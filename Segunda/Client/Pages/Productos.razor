@@ -1,0 +1,152 @@
+﻿@page "/"
+
+<h3>Productos</h3>
+@if (error)
+{
+    <div class="alert alert-danger fs-3" role="alert">
+        El número de inventario no debe ser repetido
+    </div>
+}
+<EditForm Model="producto" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="mb-3 row">
+        <label for="txtInventario" class="col-sm-2 col-form-label">Inventario</label>
+        <div class="col-sm-10">
+            <InputNumber class="form-control" id="txtInventario" @bind-Value="producto.Id" readonly="@modificando" />
+            <ValidationMessage For="()=>producto.Id" />
+        </div>
+    </div>
+    <div class="mb-3 row">
+        <label for="txtNombre" class="col-sm-2 col-form-label">Nombre</label>
+        <div class="col-sm-10">
+            <InputText class="form-control" id="txtInventario" @bind-Value="producto.Nombre" />
+            <ValidationMessage For="()=>producto.Nombre" />
+        </div>
+    </div>
+    <div class="mb-3 row">
+        <label for="txtDepartamento" class="col-sm-2 col-form-label">Departamento</label>
+        <div class="col-sm-10">
+            <InputRadioGroup class="form-check form-check-inline" @bind-Value="producto.Departamento">
+                <InputRadio class="form-check-input" id="rdbFruta" Value="@("Frutas")" /> <label class="form-check-label me-3" for="rdbFruta">Fruta</label>
+                <InputRadio class="form-check-input" id="rdbVerdura" Value="@("Verduras")" /> <label class="form-check-label me-3" for="rdbVerdura">Verdura</label>
+                <InputRadio class="form-check-input" id="rdbLacteos" Value="@("Lácteos")" /> <label class="form-check-label" for="rdbLacteos">Lácteos</label>
+            </InputRadioGroup>
+            <ValidationMessage For="()=>producto.Departamento" />
+        </div>
+    </div>
+    @if (modificando)
+    {
+        <button class="btn btn-primary" type="submit">Actualizar</button>
+        <button class="btn btn-danger" @onclick="Cancelar">Cancelar</button>
+    }
+    else
+    {
+        <button class="btn btn-primary" type="submit">Guardar</button>
+    }
+</EditForm>
+
+@if (productos.Count() > 0)
+{
+    @if (listado)
+    {
+        <button class="btn btn-secondary mt-3" @onclick="CambiarListado">Existencias</button>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Inventario</th>
+                    <th>Nombre</th>
+                    <th>Departamento</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Producto elproducto in productos)
+                {
+                    <tr>
+                        <td>@elproducto.Id</td>
+                        <td>@elproducto.Nombre</td>
+                        <td>@elproducto.Departamento</td>
+                        <td>
+                            <button @onclick="()=>Eliminar(elproducto)"><span class="oi oi-trash"></span></button>
+                            <button @onclick="()=>Modificar(elproducto)"><span class="oi oi-pencil"></span></button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <button class="btn btn-secondary mt-3" @onclick="CambiarListado">Listado</button>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Frutas</th>
+                    <th>Verduras</th>
+                    <th>Lácteos</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@productos.Count(r=>r.Departamento=="Frutas")</td>
+                    <td>@productos.Count(r=>r.Departamento=="Verduras")</td>
+                    <td>@productos.Count(r=>r.Departamento=="Lácteos")</td>
+                </tr>
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private Producto producto = new();
+    private List<Producto> productos = new();
+    private bool error = false, modificando = false, listado = true;
+
+    private void Guardar()
+    {
+        if (modificando)
+        {
+            var posicion = productos.FindIndex(r => r.Id == producto.Id);
+            productos[posicion].Nombre = producto.Nombre;
+            productos[posicion].Departamento = producto.Departamento;
+            producto = new();
+        }
+        else
+        {
+            if (productos.Any(r => r.Id == producto.Id))
+            {
+                error = true;
+            }
+            else
+            {
+                error = false;
+                productos.Add(producto);
+                producto = new();
+            }
+        }
+    }
+
+    private void Eliminar(Producto elproducto)
+    {
+        productos.Remove(elproducto);
+    }
+
+    private void Modificar(Producto elproducto)
+    {
+        producto.Id = elproducto.Id;
+        producto.Nombre = elproducto.Nombre;
+        producto.Departamento = elproducto.Departamento;
+        modificando = true;
+    }
+
+    private void Cancelar()
+    {
+        producto = new();
+        modificando = false;
+    }
+
+    private void CambiarListado()
+    {
+        listado = !listado;
+    }
+}
